@@ -1,105 +1,165 @@
-  Webhook-based Application with GCP and GitHub Actions
+GCP Webhook-based Application
+=============================
 
-Webhook-based Application with GCP and GitHub Actions
-=====================================================
-
-This project sets up a webhook-based application using Google Cloud Platform (GCP) and GitHub Actions. The application accepts a JSON payload from Google Appsheet and interacts with Google Calendar.
-
-Prerequisites
--------------
-
-*   [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
-*   [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli)
-*   [GitHub Account](https://github.com/)
-*   [Google Cloud Account](https://cloud.google.com/)
+This project sets up a webhook-based application using GitHub Actions, Terraform, and Google Cloud Platform.
 
 Setup
 -----
 
-1.  **Clone the repository**:
-    
-        git clone https://github.com/yourusername/your-repo.git
-        cd your-repo
-    
-2.  **Set up environment variables**:
-    
-    Create a `.env` file in the root directory and add the following:
-    
-        GCP_PROJECT_ID=your-gcp-project-id
-        GCP_REGION=your-gcp-region
-        GOOGLE_DEFAULT_CALENDAR_ID=your-default-calendar-id
-        GOOGLE_APPSHEET_APP_ID=your-appsheet-app-id
-        GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL=your-service-account-email
-        HEADER_SOURCE_TO_PASS=your-header-source
-    
-3.  **Set up secrets in GitHub**:
-    
-    Go to your GitHub repository settings and add the following secrets:
-    
+1.  Fork this repository.
+2.  Set the following GitHub Actions secrets:
+    *   GCP\_PROJECT\_ID
+    *   GCP\_REGION
+    *   GCP\_SERVICE\_ACCOUNT
+    *   GOOGLE\_DEFAULT\_CALENDAR\_ID
+    *   GOOGLE\_APPSHEET\_APP\_ID
+    *   GCP\_GOOGLE\_CALENDAR\_SERVICE\_ACCOUNT\_EMAIL
+    *   HEADER\_SOURCE\_TO\_PASS
     *   GOOGLE\_APPSHEET\_ACCESS\_KEY
     *   GCP\_SA\_KEY
-    *   GCP\_SERVICE\_ACCOUNT\_SECRET
-    *   GCP\_WORKLOAD\_IDENTITY\_PROVIDER
+3.  Push changes to the `main` branch to trigger the GitHub Actions workflow.
 
-Deployment
-----------
+Terraform Configuration
+-----------------------
 
-1.  **Initialize Terraform**:
-    
-        terraform init
-    
-2.  **Apply Terraform configuration**:
-    
-        terraform apply -auto-approve
-    
-3.  **Deploy using GitHub Actions**:
-    
-    Push your changes to the `main` branch. GitHub Actions will automatically deploy the infrastructure and the Cloud Function.
-    
+The Terraform configuration sets up the following resources in GCP:
 
-Usage
------
+*   Service Account for Google Calendar
+*   Secrets in GCP Secrets Manager
+*   Python Cloud Function
+*   API Gateway
 
-1.  **Webhook Endpoint**:
-    
-    The webhook endpoint is defined in the `openapi.yaml` file:
-    
-        openapi: 3.0.0
-        info:
-          title: Webhook API
-          version: 1.0.0
-        paths:
-          /:
-            post:
-              summary: Webhook endpoint
-              operationId: webhook
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      type: object
-              responses:
-                '200':
-                  description: Success
-                '401':
-                  description: Unauthorized
-    
-2.  **Send a JSON payload**:
-    
-    Send a POST request to the deployed endpoint with the required JSON payload.
-    
+Python Cloud Function
+---------------------
 
-Contributing
-------------
+The Python Cloud Function handles webhook requests and interacts with the Google Calendar API.
 
-1.  Fork the repository.
-2.  Create a new branch (`git checkout -b feature-branch`).
-3.  Commit your changes (`git commit -am 'Add new feature'`).
-4.  Push to the branch (`git push origin feature-branch`).
-5.  Create a new Pull Request.
+Sample JSON Structure
+---------------------
 
-License
--------
-
-This project is licensed under the MIT License.
+\[
+    {
+        "Row ID": "ZVy7\_iWwPu4HmuSqhhP4id",
+        "ID": "cf9342de",
+        "name": "Leon Funnell",
+        "status": "Confirmed",
+        "pick up date": "16/10/2024",
+        "return date": "23/10/2024",
+        "duration": "7",
+        "box": "Thule 460l Motion 800 XT",
+        "price/day": "£8.00",
+        "Extra item": "",
+        "extra price": "",
+        "fitting charge": "£0.00",
+        "price": "£56.00",
+        "Deposit": "£200.00",
+        "bars needed": "Flush rails",
+        "car": "Audi A6 Allroad 2015",
+        "contact": "online form",
+        "phone": "+447786385814",
+        "confirmed": "",
+        "comment": "",
+        "bar daily price": "£1.00",
+        "box daily price": "£7.00",
+        "Category": "Green",
+        "SMS Notify": "Y",
+        "Blank": "",
+        "Entry": "10/09/2024 17:38:17",
+        "Last Change": "02/10/2024 11:13:55",
+        "Registration": "LV15URN",
+        "Make": "",
+        "Model": "",
+        "Type": "",
+        "Trim": "",
+        "Email Notify": "Y",
+        "Email Address": "leon\_funnell@hotmail.com",
+        "Collection Agreed": "Y",
+        "Collection Appointment": "16/10/2024 20:30:00",
+        "CollectCalendarID": "e4j6evp0j3cjvlm97rq44avjtk",
+        "Return Agreed": "Y",
+        "Return Appointment": "23/10/2024 12:30:00",
+        "ReturnCalendarID": "7d48jmjol7dp7ig870sta2nqgg",
+        "BoxCalID": "",
+        "SMS Enabled": "Y",
+        "Email enabled": "Y",
+        "\_\_IMTHEADERS\_\_": \[
+            {
+                "name": "connection",
+                "value": "upgrade"
+            },
+            {
+                "name": "x-real-ip",
+                "value": "162.158.49.11"
+            },
+            {
+                "name": "x-request-id",
+                "value": "12c1ea1a2093e36518d9ffcb5dbc19fa"
+            },
+            {
+                "name": "content-length",
+                "value": "1070"
+            },
+            {
+                "name": "accept-encoding",
+                "value": "gzip, br"
+            },
+            {
+                "name": "cf-ray",
+                "value": "8cc3ecc7ac0fbf57-DUB"
+            },
+            {
+                "name": "cf-visitor",
+                "value": "{\\"scheme\\":\\"https\\"}"
+            },
+            {
+                "name": "content-type",
+                "value": "application/json"
+            },
+            {
+                "name": "x-webhook-source",
+                "value": "roofbox-webhook-router"
+            },
+            {
+                "name": "user-agent",
+                "value": "Make/production"
+            },
+            {
+                "name": "x-datadog-trace-id",
+                "value": "1509422687963197338"
+            },
+            {
+                "name": "x-datadog-parent-id",
+                "value": "1509422687963197338"
+            },
+            {
+                "name": "x-datadog-sampling-priority",
+                "value": "0"
+            },
+            {
+                "name": "x-datadog-tags",
+                "value": "\_dd.p.tid=66fd1cfc00000000"
+            },
+            {
+                "name": "traceparent",
+                "value": "00-66fd1cfc0000000014f28beffbf62f9a-14f28beffbf62f9a-00"
+            },
+            {
+                "name": "tracestate",
+                "value": "dd=t.tid:66fd1cfc00000000;t.dm:1;s:0"
+            },
+            {
+                "name": "cf-connecting-ip",
+                "value": "54.78.149.203"
+            },
+            {
+                "name": "cdn-loop",
+                "value": "cloudflare; loops=1"
+            },
+            {
+                "name": "cf-ipcountry",
+                "value": "IE"
+            }
+        \],
+        "\_\_IMTMETHOD\_\_": "POST"
+    }
+\]
