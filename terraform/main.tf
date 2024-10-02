@@ -89,11 +89,6 @@ variable "GCP_REGION" {
   type        = string
 }
 
-variable "GCP_SA_KEY" {
-  description = "The path to the GCP service account key file"
-  type        = string
-}
-
 variable "GOOGLE_DEFAULT_CALENDAR_ID" {
   description = "The default Google Calendar ID"
   type        = string
