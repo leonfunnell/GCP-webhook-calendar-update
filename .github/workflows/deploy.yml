@@ -22,12 +22,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up Google Cloud SDK
-      uses: google-github-actions/setup-gcloud@v0.2.0
-      with:
-        version: 'latest'
-        project_id: ${{ env.GCP_PROJECT_ID }}
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
+    - name: Install zip utility
+      run: 
+        sudo apt-get install -y zip
+
+    - name: Prepare Function Source
+      run: |
+        cd functions
+        zip -r ../terraform/function-source.zip .
 
     - name: Install Terraform
       run: |
@@ -38,7 +40,11 @@ jobs:
 
     - name: Terraform Init
       run: terraform init
-      working-directory: terraform
+      working-directory: terraform \
+          -var="GCP_PROJECT_ID=${{ env.GCP_PROJECT_ID }}" \
+          -var="GCP_REGION=${{ env.GCP_REGION }}" \
+          -var="GOOGLE_DEFAULT_CALENDAR_ID=${{ env.GOOGLE_DEFAULT_CALENDAR_ID }}" \
+          -var="HEADER_SOURCE_TO_PASS=${{ env.HEADER_SOURCE_TO_PASS }}"
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
@@ -57,7 +63,3 @@ jobs:
     - name: Clean up
       run: rm gcp_sa_key.json
 
-    - name: Prepare Function Source
-      run: |
-        cd functions
-        zip -r ../terraform/function-source.zip .
