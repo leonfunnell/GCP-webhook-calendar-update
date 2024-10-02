@@ -36,7 +36,7 @@ resource "google_cloudfunctions_function" "webhook_function" {
   name        = "webhook-function"
   runtime     = "python39"
   entry_point = "main"
-  source_archive_bucket = google_storage_bucket.function_source.bucket
+  source_archive_bucket = google_storage_bucket.function_source.name
   source_archive_object = google_storage_bucket_object.function_source.name
   trigger_http = true
   environment_variables = {
@@ -65,19 +65,18 @@ resource "google_api_gateway_api" "api_gateway" {
 resource "google_api_gateway_api_config" "api_config" {
   provider  = google-beta
   api       = google_api_gateway_api.api_gateway.api_id
-  location  = var.GCP_REGION
+  region    = var.GCP_REGION
   openapi_documents {
     document {
-      path     = "terraform/openapi.yaml"
-      contents = file("terraform/openapi.yaml")
+      path     = "${path.module}/openapi.yaml"
+      contents = file("${path.module}/openapi.yaml")
     }
   }
 }
 
 resource "google_api_gateway_gateway" "gateway" {
   provider  = google-beta
-  api       = google_api_gateway_api.api_gateway.api_id
-  location  = var.GCP_REGION
+  api_config = google_api_gateway_api_config.api_config.id
   gateway_id = "webhook-gateway"
 }
 
