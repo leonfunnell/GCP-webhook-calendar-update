@@ -1,0 +1,219 @@
+I would like to create a Github project, that expects the following parameters in GitHub Actions:
+	The following GitHub Actions variables:
+	- GCP_PROJECT_ID
+	- GCP_REGION
+	- GCP_SERVICE_ACCOUNT
+	- GOOGLE_DEFAULT_CALENDAR_ID
+	- GOOGLE_APPSHEET_APP_ID
+	- GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL
+	- HEADER_SOURCE_TO_PASS
+	And the following GitHub Actions secrets:
+	- GOOGLE_APPSHEET_ACCESS_KEY
+	- GCP_SA_KEY  (This is a multi-line JSON string, ensure it is passed into Terraform correctly)
+And the following GCP Secrets Manager secrets (automatically created by this project)
+	- GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_SECRET
+	- GCP_WORKLOAD_IDENTITY_PROVIDER
+
+Create using GitHub actions (and GitHub cloud runners) to execute modularised Terraform, to create in GCP a webhook-based application that accepts the a JSON payload from Google Appsheet. There is a sample JSON structure (at the end).  
+. Where possible I want to automate the creation of the relevent GCP service account and update the secrets in Github.  Generate a README.md file but encode it with HTML (as CoPilot doesn't appear to able to write markup without breaking out of the file), and I will convert it to markup myself.  Install any required binaries to the runner before execution. 
+
+Project setup in Terraform:
+- Ensure GitHub variables and secrets are correctly passed into Terraform
+- Use Hashicorp google-beta provider as it supports API Gateway
+- Ensure GitHub runner has Hashicorp Terraform repo before installing Terraform
+- Automate setup of identity federation between Github actions and GCP using auth and the GCP_SERVICE_ACCOUNT.
+- Authenticate to GCP using the GCP_PROJECT_ID, GCP_REGION and GCP_SA_KEY.  Create a service account GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT using GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL and store the secret in GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_SECRET.  Service account should have permissions to access the relevant Google Calendars
+
+The GCP API Gateway should call a cloud function written in Python, so long as there is a header x-webhook-source=$HEADER_SOURCE_TO_PASS$, else return 401
+
+The Python cloud function should do the following:
+- Assume double braces and 1. denote JSON values, for example {{1.box}} is a JSON object called "box", which might have the value "Thule 460l Motion 800 XT" (for example)
+- Establish a connection to Google Calendar, and pull a list of all calendars using the credentials above and store in an array such as CALENDAR_ARRAY, indexed by Calendar_ID.
+- Create arrays in memory for both the calendar $GOOGLE_DEFAULT_CALENDAR_ID$ (as CENTRAL_CALENDAR) and the calendar with the summary that matches {{1.box}} as BOX_CALENDAR
+
+For each mode in ("Collect", "Return", "Box"):
+	EVENT_NAME="$mode$ Appointment - {{1.name}} - {{1.box}} - {{1.`bars needed`}} - {{1.car}}"
+	EVENT_DESCRIPTION="
+		Name: {{1.name}}
+		Box: {{1.box}}
+		Status: {{1.status}}
+		Collect Date: {{1.`pick up date`}}
+		Collection Appointment: {{1.`Collection Appointment`}}
+		Return Date: {{1.`return date`}}
+		Return Appointment: {{1.`Return Appointment`}}
+		Duration: {{1.duration}} days 
+		Car: {{1.car}}
+		Phone: {{1.phone}}
+		Contact: {{1.contact}}
+		Price: {{1.price}}
+		Deposit: {{1.Deposit}}
+		Price/day: {{1.`price/day`}}
+		Bars: {{1.`bars needed`}}
+		"
+	If $mode$ = "Box" then 
+		# Each rentable Car roof box has a unique Google calendar (with the description matching the name of the box), and we want to ensure there is an entry in here which covers the rental period from the date of collection to the date of return, if the status of the rental is "Confirmed", "On Loan" or "Returned".  We need to return the EventID from our entry as BoxCalID
+		OUR_CALENDAR_ID=(the CalendarID from CALENDAR_ARRAY where the description matches {{1.box}})
+		CALENDAR_ENTRY_ID={{1.BoxCalID}}
+		ALL_DAY_EVENT="Yes"
+		EVENT_DURATION=""
+		START_DATE={{parseDate(1.`pick up date`; "DD/MM/YYYY")}}
+		END_DATE={{parseDate(1.`return date`; "DD/MM/YYYY")}}
+		EVENT_DURATION=""
+		EVENT_REMINDERS=""
+		
+		
+	If $mode$ is one of ("Collect" or "Return") then 
+		# If the customer has an agreed collection and/or return appointment and the status of the rental is "Confirmed", "On Loan" or "Returned", we need to ensure there is a collection/return appointment in the central calendar.  If there is an existing entry, we will know because there will be an existing EntryID in our JSON input.  If we create or update an entry, we need to return the EntryID as $mode$CalendarID.
+		If {{1.`$mode$ Agreed`}}="Y" then
+			OUR_CALENDAR_ID = $GOOGLE_DEFAULT_CALENDAR_ID$
+			CALENDAR_ENTRY_ID={{1.$mode$CalendarID}}
+			ALL_DAY_EVENT="No"
+			START_DATE="{{parseDate(1.`$mode$ Appointment`; "DD/MM/YYYY HH:mm")}}"
+			END_DATE=""
+			EVENT_DURATION="00:30"
+			EVENT_REMINDERS="
+				Item 1:
+					Method: Pop-up
+					Minutes before: 180
+				Item 2:
+					Method: Pop-up
+					Minutes before: 30
+				Item 3:
+					Method: Email
+					Minutes before: 180
+				Show time as: busy"
+			
+		End if
+	End if
+	Create/call a routine with a name like "UPSERT_CALENDAR_ROUTINE" which takes in the above parameters then checks, updates or deletes the appropriate event (with an ID of CALENDAR_ENTRY_ID) in the appropriate Google calendar (OUR_CALENDAR_ID) and returns the ID and status of the event.
+End For each
+Return the values for CollectCalendarID, ReturnCalendarID and BoxCalID as a JSON string, with status code 200
+If there is an error, display a relevant HTML code and the status of what failed.
+
+Sample JSON Structure follows:
+"[
+    {
+        "Row ID": "ZVy7_iWwPu4HmuSqhhP4id",
+        "ID": "cf9342de",
+        "name": "Leon Funnell",
+        "status": "Confirmed",
+        "pick up date": "16/10/2024",
+        "return date": "23/10/2024",
+        "duration": "7",
+        "box": "Thule 460l Motion 800 XT",
+        "price/day": "£8.00",
+        "Extra item": "",
+        "extra price": "",
+        "fitting charge": "£0.00",
+        "price": "£56.00",
+        "Deposit": "£200.00",
+        "bars needed": "Flush rails",
+        "car": "Audi A6 Allroad 2015",
+        "contact": "online form",
+        "phone": "+447786385814",
+        "confirmed": "",
+        "comment": "",
+        "bar daily price": "£1.00",
+        "box daily price": "£7.00",
+        "Category": "Green",
+        "SMS Notify": "Y",
+        "Blank": "",
+        "Entry": "10/09/2024 17:38:17",
+        "Last Change": "02/10/2024 11:13:55",
+        "Registration": "LV15URN",
+        "Make": "",
+        "Model": "",
+        "Type": "",
+        "Trim": "",
+        "Email Notify": "Y",
+        "Email Address": "leon_funnell@hotmail.com",
+        "Collection Agreed": "Y",
+        "Collection Appointment": "16/10/2024 20:30:00",
+        "CollectCalendarID": "e4j6evp0j3cjvlm97rq44avjtk",
+        "Return Agreed": "Y",
+        "Return Appointment": "23/10/2024 12:30:00",
+        "ReturnCalendarID": "7d48jmjol7dp7ig870sta2nqgg",
+        "BoxCalID": "",
+        "SMS Enabled": "Y",
+        "Email enabled": "Y",
+        "__IMTHEADERS__": [
+            {
+                "name": "connection",
+                "value": "upgrade"
+            },
+            {
+                "name": "x-real-ip",
+                "value": "162.158.49.11"
+            },
+            {
+                "name": "x-request-id",
+                "value": "12c1ea1a2093e36518d9ffcb5dbc19fa"
+            },
+            {
+                "name": "content-length",
+                "value": "1070"
+            },
+            {
+                "name": "accept-encoding",
+                "value": "gzip, br"
+            },
+            {
+                "name": "cf-ray",
+                "value": "8cc3ecc7ac0fbf57-DUB"
+            },
+            {
+                "name": "cf-visitor",
+                "value": "{\"scheme\":\"https\"}"
+            },
+            {
+                "name": "content-type",
+                "value": "application/json"
+            },
+            {
+                "name": "x-webhook-source",
+                "value": "roofbox-webhook-router"
+            },
+            {
+                "name": "user-agent",
+                "value": "Make/production"
+            },
+            {
+                "name": "x-datadog-trace-id",
+                "value": "1509422687963197338"
+            },
+            {
+                "name": "x-datadog-parent-id",
+                "value": "1509422687963197338"
+            },
+            {
+                "name": "x-datadog-sampling-priority",
+                "value": "0"
+            },
+            {
+                "name": "x-datadog-tags",
+                "value": "_dd.p.tid=66fd1cfc00000000"
+            },
+            {
+                "name": "traceparent",
+                "value": "00-66fd1cfc0000000014f28beffbf62f9a-14f28beffbf62f9a-00"
+            },
+            {
+                "name": "tracestate",
+                "value": "dd=t.tid:66fd1cfc00000000;t.dm:1;s:0"
+            },
+            {
+                "name": "cf-connecting-ip",
+                "value": "54.78.149.203"
+            },
+            {
+                "name": "cdn-loop",
+                "value": "cloudflare; loops=1"
+            },
+            {
+                "name": "cf-ipcountry",
+                "value": "IE"
+            }
+        ],
+        "__IMTMETHOD__": "POST"
+    }
+]"
