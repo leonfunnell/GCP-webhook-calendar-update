@@ -5,6 +5,12 @@ provider "google" {
   credentials = file(var.GCP_SA_KEY)
 }
 
+provider "google-beta" {
+  project     = var.GCP_PROJECT_ID
+  region      = var.GCP_REGION
+  credentials = file(var.GCP_SA_KEY)
+}
+
 resource "google_service_account" "calendar_sa" {
   account_id   = "calendar-sa"
   display_name = "Calendar Service Account"
@@ -49,6 +55,30 @@ resource "google_storage_bucket_object" "function_source" {
   name   = "function-source.zip"
   bucket = google_storage_bucket.function_source.name
   source = "functions/function-source.zip"
+}
+
+resource "google_api_gateway_api" "api_gateway" {
+  provider = google-beta
+  api_id   = "webhook-api"
+}
+
+resource "google_api_gateway_api_config" "api_config" {
+  provider  = google-beta
+  api       = google_api_gateway_api.api_gateway.api_id
+  location  = var.GCP_REGION
+  openapi_documents {
+    document {
+      path     = "terraform/openapi.yaml"
+      contents = file("terraform/openapi.yaml")
+    }
+  }
+}
+
+resource "google_api_gateway_gateway" "gateway" {
+  provider  = google-beta
+  api       = google_api_gateway_api.api_gateway.api_id
+  location  = var.GCP_REGION
+  gateway_id = "webhook-gateway"
 }
 
 # Variable Declarations
