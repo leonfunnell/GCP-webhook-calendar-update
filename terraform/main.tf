@@ -1,3 +1,4 @@
+# terraform/main.tf
 provider "google" {
   project = var.gcp_project_id
   region  = var.gcp_region
@@ -35,6 +36,7 @@ resource "google_cloudfunctions_function" "webhook_function" {
   environment_variables = {
 	GOOGLE_DEFAULT_CALENDAR_ID = var.google_default_calendar_id
 	HEADER_SOURCE_TO_PASS = var.header_source_to_pass
+	GCP_SERVICE_ACCOUNT_SECRET = google_secret_manager_secret_version.calendar_sa_secret_version.secret_data
   }
 }
 
@@ -46,7 +48,7 @@ resource "google_storage_bucket" "function_source" {
 resource "google_storage_bucket_object" "function_source" {
   name   = "function-source.zip"
   bucket = google_storage_bucket.function_source.name
-  source = "function-source.zip"
+  source = "functions/function-source.zip"
 }
 
 resource "google_api_gateway_api" "api_gateway" {
@@ -58,8 +60,8 @@ resource "google_api_gateway_api_config" "api_config" {
   location = var.gcp_region
   openapi_documents {
 	document {
-	  path     = "openapi.yaml"
-	  contents = file("openapi.yaml")
+	  path     = "terraform/openapi.yaml"
+	  contents = file("terraform/openapi.yaml")
 	}
   }
 }

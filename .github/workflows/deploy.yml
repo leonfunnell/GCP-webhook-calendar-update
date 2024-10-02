@@ -7,12 +7,12 @@ on:
       - main
 
 env:
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_REGION: ${{ secrets.GCP_REGION }}
-  GOOGLE_DEFAULT_CALENDAR_ID: ${{ secrets.GOOGLE_DEFAULT_CALENDAR_ID }}
-  GOOGLE_APPSHEET_APP_ID: ${{ secrets.GOOGLE_APPSHEET_APP_ID }}
-  GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL: ${{ secrets.GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL }}
-  HEADER_SOURCE_TO_PASS: ${{ secrets.HEADER_SOURCE_TO_PASS }}
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ vars.GCP_REGION }}
+  GOOGLE_DEFAULT_CALENDAR_ID: ${{ vars.GOOGLE_DEFAULT_CALENDAR_ID }}
+  GOOGLE_APPSHEET_APP_ID: ${{ vars.GOOGLE_APPSHEET_APP_ID }}
+  GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL: ${{ vars.GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL }}
+  HEADER_SOURCE_TO_PASS: ${{ vars.HEADER_SOURCE_TO_PASS }}
 
 jobs:
   deploy:
@@ -35,9 +35,16 @@ jobs:
 
     - name: Terraform Init
       run: terraform init
+      working-directory: terraform
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
+      working-directory: terraform
       env:
         GOOGLE_APPSHEET_ACCESS_KEY: ${{ secrets.GOOGLE_APPSHEET_ACCESS_KEY }}
         GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Prepare Function Source
+      run: |
+        cd functions
+        zip -r ../terraform/function-source.zip .

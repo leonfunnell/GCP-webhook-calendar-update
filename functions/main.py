@@ -1,4 +1,4 @@
-# main.py
+# functions/main.py
 import json
 import os
 from googleapiclient.discovery import build
