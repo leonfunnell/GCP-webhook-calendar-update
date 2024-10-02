@@ -2,13 +2,11 @@
 provider "google" {
   project     = var.GCP_PROJECT_ID
   region      = var.GCP_REGION
-  credentials = file(var.GCP_SA_KEY)
 }
 
 provider "google-beta" {
   project     = var.GCP_PROJECT_ID
   region      = var.GCP_REGION
-  credentials = file(var.GCP_SA_KEY)
 }
 
 resource "google_service_account" "calendar_sa" {

@@ -39,18 +39,19 @@ jobs:
     - name: Terraform Init
       run: terraform init
       working-directory: terraform
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
     - name: Terraform Apply
       run: |
-        echo "${{ secrets.GCP_SA_KEY }}" > gcp_sa_key.json
         terraform apply -auto-approve \
           -var="GCP_PROJECT_ID=${{ env.GCP_PROJECT_ID }}" \
           -var="GCP_REGION=${{ env.GCP_REGION }}" \
-          -var="GCP_SA_KEY=gcp_sa_key.json" \
           -var="GOOGLE_DEFAULT_CALENDAR_ID=${{ env.GOOGLE_DEFAULT_CALENDAR_ID }}" \
           -var="HEADER_SOURCE_TO_PASS=${{ env.HEADER_SOURCE_TO_PASS }}"
       working-directory: terraform
       env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         GOOGLE_APPSHEET_ACCESS_KEY: ${{ secrets.GOOGLE_APPSHEET_ACCESS_KEY }}
 
     - name: Clean up
