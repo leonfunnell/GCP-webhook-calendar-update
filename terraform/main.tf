@@ -17,7 +17,7 @@ resource "google_service_account" "calendar_sa" {
 }
 
 resource "google_secret_manager_secret" "calendar_sa_secret" {
-  secret_id = "GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_SECRET"
+  secret_id = "GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT"
   replication {
     auto {}
   }
@@ -68,7 +68,7 @@ resource "google_api_gateway_api_config" "api_config" {
   openapi_documents {
     document {
       path     = "${path.module}/openapi.yaml"
-      contents = file("${path.module}/openapi.yaml")
+      contents = filebase64("${path.module}/openapi.yaml")
     }
   }
 }
