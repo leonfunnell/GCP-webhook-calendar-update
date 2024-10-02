@@ -46,6 +46,10 @@ jobs:
       env:
         GOOGLE_APPSHEET_ACCESS_KEY: ${{ secrets.GOOGLE_APPSHEET_ACCESS_KEY }}
         GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        GCP_REGION: ${{ vars.GCP_REGION }}
+        GOOGLE_DEFAULT_CALENDAR_ID: ${{ vars.GOOGLE_DEFAULT_CALENDAR_ID }}
+        HEADER_SOURCE_TO_PASS: ${{ vars.HEADER_SOURCE_TO_PASS }}
 
     - name: Prepare Function Source
       run: |

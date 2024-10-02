@@ -1,8 +1,8 @@
 # terraform/main.tf
 provider "google" {
-  project = var.gcp_project_id
-  region  = var.gcp_region
-  credentials = file(var.gcp_sa_key)
+  project     = var.GCP_PROJECT_ID
+  region      = var.GCP_REGION
+  credentials = file(var.GCP_SA_KEY)
 }
 
 resource "google_service_account" "calendar_sa" {
@@ -13,7 +13,7 @@ resource "google_service_account" "calendar_sa" {
 resource "google_secret_manager_secret" "calendar_sa_secret" {
   secret_id = "GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_SECRET"
   replication {
-	automatic = true
+    automatic = true
   }
 }
 
@@ -34,15 +34,15 @@ resource "google_cloudfunctions_function" "webhook_function" {
   source_archive_object = google_storage_bucket_object.function_source.name
   trigger_http = true
   environment_variables = {
-	GOOGLE_DEFAULT_CALENDAR_ID = var.google_default_calendar_id
-	HEADER_SOURCE_TO_PASS = var.header_source_to_pass
-	GCP_SERVICE_ACCOUNT_SECRET = google_secret_manager_secret_version.calendar_sa_secret_version.secret_data
+    GOOGLE_DEFAULT_CALENDAR_ID = var.GOOGLE_DEFAULT_CALENDAR_ID
+    HEADER_SOURCE_TO_PASS = var.HEADER_SOURCE_TO_PASS
+    GCP_SERVICE_ACCOUNT_SECRET = google_secret_manager_secret_version.calendar_sa_secret_version.secret_data
   }
 }
 
 resource "google_storage_bucket" "function_source" {
-  name     = "${var.gcp_project_id}-function-source"
-  location = var.gcp_region
+  name     = "${var.GCP_PROJECT_ID}-function-source"
+  location = var.GCP_REGION
 }
 
 resource "google_storage_bucket_object" "function_source" {
@@ -57,17 +57,43 @@ resource "google_api_gateway_api" "api_gateway" {
 
 resource "google_api_gateway_api_config" "api_config" {
   api      = google_api_gateway_api.api_gateway.api_id
-  location = var.gcp_region
+  location = var.GCP_REGION
   openapi_documents {
-	document {
-	  path     = "terraform/openapi.yaml"
-	  contents = file("terraform/openapi.yaml")
-	}
+    document {
+      path     = "terraform/openapi.yaml"
+      contents = file("terraform/openapi.yaml")
+    }
   }
 }
 
 resource "google_api_gateway_gateway" "gateway" {
   api      = google_api_gateway_api.api_gateway.api_id
-  location = var.gcp_region
+  location = var.GCP_REGION
   gateway_id = "webhook-gateway"
+}
+
+# Variable Declarations
+variable "GCP_PROJECT_ID" {
+  description = "The GCP project ID"
+  type        = string
+}
+
+variable "GCP_REGION" {
+  description = "The GCP region"
+  type        = string
+}
+
+variable "GCP_SA_KEY" {
+  description = "The path to the GCP service account key file"
+  type        = string
+}
+
+variable "GOOGLE_DEFAULT_CALENDAR_ID" {
+  description = "The default Google Calendar ID"
+  type        = string
+}
+
+variable "HEADER_SOURCE_TO_PASS" {
+  description = "The header source to pass"
+  type        = string
 }
