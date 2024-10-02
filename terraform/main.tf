@@ -65,7 +65,6 @@ resource "google_api_gateway_api" "api_gateway" {
 resource "google_api_gateway_api_config" "api_config" {
   provider  = google-beta
   api       = google_api_gateway_api.api_gateway.api_id
-  region    = var.GCP_REGION
   openapi_documents {
     document {
       path     = "${path.module}/openapi.yaml"
@@ -78,6 +77,7 @@ resource "google_api_gateway_gateway" "gateway" {
   provider  = google-beta
   api_config = google_api_gateway_api_config.api_config.id
   gateway_id = "webhook-gateway"
+  region     = var.GCP_REGION
 }
 
 # Variable Declarations
