@@ -19,7 +19,7 @@ resource "google_service_account" "calendar_sa" {
 resource "google_secret_manager_secret" "calendar_sa_secret" {
   secret_id = "GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_SECRET"
   replication {
-    automatic = {}
+    auto {}
   }
 }
 
