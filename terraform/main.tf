@@ -1,4 +1,4 @@
-# terraform/main.tf 
+# terraform/main.tf
 provider "google" {
   project     = var.GCP_PROJECT_ID
   region      = var.GCP_REGION
