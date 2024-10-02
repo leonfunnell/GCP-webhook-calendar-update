@@ -13,7 +13,7 @@ resource "google_service_account" "calendar_sa" {
 resource "google_secret_manager_secret" "calendar_sa_secret" {
   secret_id = "GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_SECRET"
   replication {
-    automatic = true
+    automatic = {}
   }
 }
 
@@ -49,27 +49,6 @@ resource "google_storage_bucket_object" "function_source" {
   name   = "function-source.zip"
   bucket = google_storage_bucket.function_source.name
   source = "functions/function-source.zip"
-}
-
-resource "google_api_gateway_api" "api_gateway" {
-  api_id = "webhook-api"
-}
-
-resource "google_api_gateway_api_config" "api_config" {
-  api      = google_api_gateway_api.api_gateway.api_id
-  location = var.GCP_REGION
-  openapi_documents {
-    document {
-      path     = "terraform/openapi.yaml"
-      contents = file("terraform/openapi.yaml")
-    }
-  }
-}
-
-resource "google_api_gateway_gateway" "gateway" {
-  api      = google_api_gateway_api.api_gateway.api_id
-  location = var.GCP_REGION
-  gateway_id = "webhook-gateway"
 }
 
 # Variable Declarations
