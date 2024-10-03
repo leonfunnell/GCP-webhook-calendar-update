@@ -49,9 +49,10 @@ jobs:
       run: zip -r functions/function-source.zip functions/.
     
     - name: Create/use TF State bucket
+      continue-on-error: true
       run: |
         gcloud storage buckets list gcloud ${{ env.TF_VAR_TF_STATE_BUCKET }} &>/dev/null || gcloud storage buckets create ${{ env.TF_VAR_TF_STATE_BUCKET }} --location=${{ env.GCP_REGION }}
-    
+        
     - name: Terraform Init
       run: terraform init 
       working-directory: terraform
