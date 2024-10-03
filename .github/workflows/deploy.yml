@@ -50,7 +50,6 @@ jobs:
     
     - name: Create/use TF State bucket
       run: |
-        # create bucket if it doesnt exist
         gcloud storage buckets list gcloud ${{ env.TF_VAR_TF_STATE_BUCKET }} &>/dev/null || storage buckets create ${{ env.TF_VAR_TF_STATE_BUCKET }} --location=${{ env.GCP_REGION }}
     
     - name: Terraform Init
