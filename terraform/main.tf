@@ -1,4 +1,17 @@
 # terraform/main.tf
+
+resource "google_storage_bucket" "tf_state" {
+  name     = "tf_state"
+  location = var.GCP_REGION
+}
+
+terraform {
+  backend "gcs" {
+    bucket  = "tf_state"
+    prefix  = "terraform/state"
+  }
+}
+
 provider "google" {
   project     = var.GCP_PROJECT_ID
   region      = var.GCP_REGION
