@@ -15,6 +15,7 @@ env:
   HEADER_SOURCE_TO_PASS: ${{ vars.HEADER_SOURCE_TO_PASS }}
   GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
   GOOGLE_APPSHEET_ACCESS_KEY: ${{ secrets.GOOGLE_APPSHEET_ACCESS_KEY }}
+  TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
   TF_VAR_GOOGLE_APPSHEET_APP_ID: ${{ vars.GOOGLE_APPSHEET_APP_ID }}
   TF_VAR_GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   TF_VAR_GCP_REGION: ${{ vars.GCP_REGION }}
@@ -22,11 +23,11 @@ env:
   TF_VAR_HEADER_SOURCE_TO_PASS: ${{ vars.HEADER_SOURCE_TO_PASS }}
   TF_VAR_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
   TF_VAR_GOOGLE_APPSHEET_ACCESS_KEY: ${{ secrets.GOOGLE_APPSHEET_ACCESS_KEY }}
+  TF_VAR_TF_STATE_BUCKET: gs://${{ env.GCP_PROJECT_ID }}-tfstate
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -46,6 +47,11 @@ jobs:
 
     - name: Prepare Function Source
       run: zip -r functions/function-source.zip functions/.
+    
+    - name: Create/use TF State bucket
+      run: |
+        # create bucket if it doesnt exist
+        gcloud storage buckets list gcloud ${{ env.TF_VAR_TF_STATE_BUCKET }} &>/dev/null || storage buckets create ${{ env.TF_VAR_TF_STATE_BUCKET }} --location=${{ env.GCP_REGION }}
     
     - name: Terraform Init
       run: terraform init 

@@ -1,16 +1,8 @@
 # terraform/main.tf
-resource "random_pet" "bucket" {
-  byte_length = 8
-}
-
-resource "google_storage_bucket" "tf_state" {
-  name     = "tf_state_${random_pet.bucket}"
-  location = var.GCP_REGION
-}
 
 terraform {
   backend "gcs" {
-    bucket  = "tf_state"
+    bucket  = var.TF_STATE_BUCKET
     prefix  = "terraform/state"
   }
 }
