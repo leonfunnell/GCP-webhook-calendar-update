@@ -1,12 +1,5 @@
 # terraform/main.tf
 
-terraform {
-  backend "gcs" {
-    bucket  = "${TF_STATE_BUCKET}"
-    prefix  = "terraform/state"
-  }
-}
-
 provider "google" {
   project     = var.GCP_PROJECT_ID
   region      = var.GCP_REGION
@@ -104,11 +97,5 @@ variable "GOOGLE_DEFAULT_CALENDAR_ID" {
 
 variable "HEADER_SOURCE_TO_PASS" {
   description = "The header source to pass"
-  type        = string
-}
-
-
-variable "TF_STATE_BUCKET" {
-  description = "Name of TF State bucket"
   type        = string
 }
