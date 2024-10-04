@@ -66,7 +66,7 @@ jobs:
         cat terraform/backend.tf || echo file not created!
 
     - name: Terraform Init
-      run: terraform init 
+      run: terraform init -reconfigure
       working-directory: terraform
 
     - name: Terraform Apply
