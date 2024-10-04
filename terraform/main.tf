@@ -20,7 +20,7 @@ resource "google_cloudfunctions_function" "webhook_function" {
   environment_variables = {
     GOOGLE_DEFAULT_CALENDAR_ID = var.GOOGLE_DEFAULT_CALENDAR_ID
     HEADER_SOURCE_TO_PASS = var.HEADER_SOURCE_TO_PASS
-    GCP_SERVICE_ACCOUNT_SECRET = google_secret_manager_secret_version.calendar_sa_secret_version.secret_data
+    GCP_SERVICE_ACCOUNT_SECRET = var.GOOGLE_CREDENTIALS
   }
 }
 
@@ -66,6 +66,12 @@ variable "GCP_PROJECT_ID" {
 
 variable "GCP_REGION" {
   description = "The GCP region"
+  type        = string
+}
+
+# Variable Declarations
+variable "GOOGLE_CREDENTIALS" {
+  description = "The GCP credentials JSON object"
   type        = string
 }
 
