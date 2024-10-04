@@ -50,17 +50,20 @@ jobs:
         sudo apt-get update && sudo apt-get install -y terraform gnupg software-properties-common zip
 
     - name: Prepare Function Source
-      run: zip -r functions/function-source.zip functions/.
+      run: |
+        zip -r functions/function-source.zip functions/.
+        ls -l functions/function-source.zip || echo File not found!
     
     - name: Create/use TF State bucket, create TF backend config
       continue-on-error: true
       run: |
-        gcloud storage buckets list gcloud ${{ env.TF_VAR_TF_STATE_BUCKET }} &>/dev/null || gcloud storage buckets create ${{ env.TF_VAR_TF_STATE_BUCKET }} --location=${{ env.GCP_REGION }}
+        gcloud storage buckets list | grep ${{ env.TF_VAR_TF_STATE_BUCKET }} || gcloud storage buckets create ${{ env.TF_VAR_TF_STATE_BUCKET }} --location=${{ env.GCP_REGION }}
         cat << 'EOF' > terraform/backend.tf
           terraform {
             backend "gcs" {
               bucket = "${{ env.TF_VAR_TF_STATE_BUCKET }}"
             EOF
+        cat terraform/backend.tf || echo file not created!
 
     - name: Terraform Init
       run: terraform init 
