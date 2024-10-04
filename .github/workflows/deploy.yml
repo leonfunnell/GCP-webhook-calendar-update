@@ -57,6 +57,7 @@ jobs:
     - name: Create/use TF State bucket, create TF backend config
       run: |
         gcloud storage buckets list | grep ${{ env.TF_VAR_TF_STATE_BUCKET }} || gcloud storage buckets create ${{ env.TF_VAR_TF_STATE_BUCKET }} --location=${{ env.GCP_REGION }}
+        gcloud storage buckets describe ${{ env.TF_VAR_TF_STATE_BUCKET }} | grep "versioning_enabled: true" || gcloud storage buckets update ${{ env.TF_VAR_TF_STATE_BUCKET }} --versioning
         echo "terraform {" > terraform/backend.tf
         echo "   backend \"gcs\" {" >> terraform/backend.tf
         echo "      bucket = \"${{ env.TF_VAR_TF_STATE_BUCKET }}\"" >> terraform/backend.tf
