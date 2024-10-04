@@ -63,7 +63,7 @@ resource "google_storage_bucket" "function_source" {
 resource "google_storage_bucket_object" "function_source" {
   name   = "function-source.zip"
   bucket = google_storage_bucket.function_source.name
-  source = "${path.module}/functions/function-source.zip"
+  source = "${path.module}/../functions/function-source.zip"
 }
 
 resource "google_api_gateway_api" "api_gateway" {
@@ -76,8 +76,8 @@ resource "google_api_gateway_api_config" "api_config" {
   api       = google_api_gateway_api.api_gateway.api_id
   openapi_documents {
     document {
-      path     = "${path.module}/terraform/openapi.yaml"
-      contents = filebase64("${path.module}/terraform/openapi.yaml")
+      path     = "${path.module}/openapi.yaml"
+      contents = filebase64("${path.module}/openapi.yaml")
     }
   }
 }
