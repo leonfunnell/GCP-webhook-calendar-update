@@ -60,6 +60,8 @@ jobs:
         echo "terraform {" > terraform/backend.tf
         echo "   backend \"gcs\" {" >> terraform/backend.tf
         echo "      bucket = \"${{ env.TF_VAR_TF_STATE_BUCKET }}\"" >> terraform/backend.tf
+        echo "   }" >> terraform/backend.tf
+        echo "}" >> terraform/backend.tf
         cat terraform/backend.tf || echo file not created!
 
     - name: Terraform Init
