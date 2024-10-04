@@ -10,27 +10,6 @@ provider "google-beta" {
   region      = var.GCP_REGION
 }
 
-resource "google_service_account" "calendar_sa" {
-  account_id   = "calendar-sa"
-  display_name = "Calendar Service Account"
-}
-
-resource "google_secret_manager_secret" "calendar_sa_secret" {
-  secret_id = "GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT"
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "calendar_sa_secret_version" {
-  secret      = google_secret_manager_secret.calendar_sa_secret.id
-  secret_data = google_service_account_key.calendar_sa_key.private_key
-}
-
-resource "google_service_account_key" "calendar_sa_key" {
-  service_account_id = google_service_account.calendar_sa.name
-}
-
 resource "google_cloudfunctions_function" "webhook_function" {
   name        = "webhook-function"
   runtime     = "python39"
@@ -53,7 +32,7 @@ resource "google_storage_bucket" "function_source" {
 resource "google_storage_bucket_object" "function_source" {
   name   = "function-source.zip"
   bucket = google_storage_bucket.function_source.name
-  source = "functions/function-source.zip"
+  source = "functions/*"
 }
 
 resource "google_api_gateway_api" "api_gateway" {
