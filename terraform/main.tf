@@ -8,6 +8,31 @@ provider "google-beta" {
   region      = var.GCP_REGION
 }
 
+resource "google_project_service" "api_gateway" {
+  project = var.GCP_PROJECT_ID
+  service = "apigateway.googleapis.com"
+}
+
+resource "google_project_service" "secret_manager" {
+  project = var.GCP_PROJECT_ID
+  service = "secretmanager.googleapis.com"
+}
+
+resource "google_project_service" "calendar" {
+  project = var.GCP_PROJECT_ID
+  service = "calendar.googleapis.com"
+}
+
+resource "google_project_service" "iam" {
+  project = var.GCP_PROJECT_ID
+  service = "iam.googleapis.com"
+}
+
+resource "google_project_service" "cloud_resource_manager" {
+  project = var.GCP_PROJECT_ID
+  service = "cloudresourcemanager.googleapis.com"
+}
+
 resource "google_service_account" "my_calendar_sa" {
   account_id   = var.CALENDAR_SERVICE_ACCOUNT_NAME
   display_name = "Calendar Service Account"
@@ -35,6 +60,12 @@ resource "google_project_iam_member" "function_invoker_role" {
   member  = "serviceAccount:${google_service_account.my_calendar_sa.email}"
 }
 
+resource "google_project_iam_member" "secret_accessor_role" {
+  project = var.GCP_PROJECT_ID
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.my_calendar_sa.email}"
+}
+
 resource "google_project_iam_member" "calendar_admin_role" {
   project = var.GCP_PROJECT_ID
   role    = "roles/calendar.admin"
@@ -53,6 +84,10 @@ resource "google_cloudfunctions_function" "webhook_function" {
     HEADER_SOURCE_TO_PASS = var.HEADER_SOURCE_TO_PASS
     GCP_SERVICE_ACCOUNT_SECRET = google_secret_manager_secret_version.my_calendar_secret_version.secret_data
   }
+}
+
+output "cloud_function_url" {
+  value = google_cloudfunctions_function.webhook_function.https_trigger_url
 }
 
 resource "google_storage_bucket" "function_source" {
@@ -87,6 +122,10 @@ resource "google_api_gateway_gateway" "gateway" {
   api_config = google_api_gateway_api_config.api_config.id
   gateway_id = "webhook-gateway"
   region     = var.GCP_REGION
+}
+
+output "api_gateway_url" {
+  value = google_api_gateway_gateway.gateway.default_hostname
 }
 
 # Variable Declarations
