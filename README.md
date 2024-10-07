@@ -9,16 +9,23 @@ Setup
 -----
 
 Prerequisists:
-- You have a valid GCP account with admin role
-- You have gcloud CLI installed and authenticated in BASH
+- You have a valid GCP account and project with admin role
+- You have gcloud CLI installed and authenticated in BASH.  Type:
+```
+gcloud auth login
+```
 - You have gh and git installed
-- gh is authenticated with your github repo
+- gh is authenticated with your github repo.  Type:
+```
+gh auth login
+```
 
 1. Fork this repository into your own Github account
 2. Run the following (to create a build account in GCP):
-```cd /setup
+```
+cd /setup
 chmod +x gcpsetup.sh
-./gcpsetup.sh
+./gcpsetup.sh <build service account name>
 ```
 3. (Option 1) Run the following to populate your GitHub Actions secrets and variables.
 
