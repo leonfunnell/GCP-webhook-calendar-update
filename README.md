@@ -46,19 +46,28 @@ gh auth login
     - 
 
 1. Fork this repository into your own Github account
-2. Run the following (to create a build account in GCP):
+2. Run the following (to create a build account in GCP and output a JSON credentials file on your local filesystem):
 ```
 cd /setup
 chmod +x gcpsetup.sh
 ./gcpsetup.sh <build service account name>
 ```
-3. (Option 1) Run the following to populate your GitHub Actions secrets and variables.
+3. (Option 1) Run the following to populate your GitHub Actions secrets and variables from the BASH environment variables:
 ```
-ghvariablessetup.sh (GCP_REGION) (GCP_PROJECT_ID) 
+# set the following variables:
+GOOGLE_CREDENTIALS_FILE=<build service account name>.json
+GCP_PROJECT_ID=<GCP Project ID>
+GCP_REGION=<GCP Region Code>
+GCP_CALENDAR_SERVICE_ACCOUNT=<the name you'd like to use for your function service account>
+GOOGLE_DEFAULT_CALENDAR_ID=<the calendar ID for your default calendar, usually your GMAIL address>
+GOOGLE_APPSHEET_APP_ID=<Appsheet ID>
+GOOGLE_APPSHEET_ACCESS_KEY=<the secret access key from Google Appsheet>
+
+./ghvariablessetup.sh
 ```
 
 3. (Option 2)  Set the following GitHub Actions secrets:
-    *   GOOGLE_CREDENTIALS  (account with deploy credentials)
+    *   GOOGLE_CREDENTIALS (contents of <build service account name> json file)
     *   GCP\_PROJECT\_ID
     *   GCP\_REGION
     *   GCP\_CALENDAR_SERVICE\_ACCOUNT (account name for )
