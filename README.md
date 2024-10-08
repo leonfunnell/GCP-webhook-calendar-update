@@ -66,17 +66,18 @@ GOOGLE_APPSHEET_ACCESS_KEY=<the secret access key from Google Appsheet>
 ./ghvariablessetup.sh
 ```
 
-3. (Option 2)  Set the following GitHub Actions secrets:
+3. (Option 2):
+  Set the following GitHub Actions secrets:
     *   GOOGLE_CREDENTIALS (contents of <build service account name> json file)
+    *   GOOGLE\_APPSHEET\_ACCESS\_KEY
+  And set the following GitHub Actions variables:
     *   GCP\_PROJECT\_ID
     *   GCP\_REGION
-    *   GCP\_CALENDAR_SERVICE\_ACCOUNT (account name for )
-    *   GCP\_GOOGLE\_CALENDAR\_SERVICE\_ACCOUNT\_EMAIL
+    *   GCP\_CALENDAR_SERVICE\_ACCOUNT (account name for your function service account)
     *   GOOGLE\_DEFAULT\_CALENDAR\_ID
     *   GOOGLE\_APPSHEET\_APP\_ID
-
     *   HEADER\_SOURCE\_TO\_PASS
-    *   GOOGLE\_APPSHEET\_ACCESS\_KEY
+
 4.  Push changes to the `main` branch to trigger the GitHub Actions workflow.
 
 Terraform Configuration
