@@ -7,11 +7,12 @@ It's designed to be fully automated, all you need is an existing GitHub and GCP 
 
 Most of the code was created using GitHub Co-Pilot (based on ChatGPT 4o).  The AI intents used are in the AI Intents folder for your reference.  Be aware that this resulted in a somewhat broken project (as is usually the case when using AI) so I had to re-write a sizeable amount of it manually afterwards.  ChatGPT made a lot of halucinations about how to use various Terraform and GitHub Actions commands.
 
-It will do the following:
-- Run deploy.yml in GitHub Actions, which pulls repository variables and secrets from GitHub.  These can be defined by running the script or manually entering them in "settings/Secrets and Variables/Actions".  You can either define them at the Repository level or Environment level (such as Dev, QA, Prod)
-- Run Two terraform templates.  
-    - The first (backend.tf) is generated dynamically in GitHub Actions to connect to our TF_STATE_BUCKET. We need to do this as GitHub action uses ephemeral runners, and any state files stored on the filesystem of the runner are lost.  This way we can keep track of the state of our GCP resources across runs. 
-    - The second (main.tf) creates all the GCP resources:
+## It will do the following:
+- **Create a service account in GCP*** with the appropriate permissions to deploy all the resources, using a BASH script you run on your local terminal
+- **Run deploy.yml in GitHub Actions**, which pulls repository variables and secrets from GitHub.  These can be defined by running the script or manually entering them in "settings/Secrets and Variables/Actions".  You can either define them at the Repository level or Environment level (such as Dev, QA, Prod)
+- **Run Two terraform templates.**  
+    - **The first (backend.tf)** is generated dynamically in GitHub Actions to connect to our TF_STATE_BUCKET. We need to do this as GitHub action uses ephemeral runners, and any state files stored on the filesystem of the runner are lost.  This way we can keep track of the state of our GCP resources across runs. 
+    - **The second (main.tf)** creates all the GCP resources:
         - A service account to run our Python code in Cloud Functions with permissions to read secrets and manage Google Calendar entries
         - Storage for secrets to connect to GCP, Google Calendar, Google Appsheet, etc in Google Secrets Manager
         - A Bucket to store the Python code
@@ -49,16 +50,22 @@ gh auth login
 2. Run the following (to create a build account in GCP and output a JSON credentials file on your local filesystem):
 ```
 cd /setup
+export GCP_PROJECT_ID=<your GCP Project ID>
+export BUILD_SERVICE_ACCOUNT_NAME=<Build service account name, like build-sa>
+export BUILD_SERVICE_ACCOUNT_DISPLAY_NAME=<Build account display name, like "Account for building our resources">
 chmod +x gcpsetup.sh
-./gcpsetup.sh <build service account name>
+./gcpsetup.sh 
 ```
 3. (Option 1) Run the following to populate your GitHub Actions secrets and variables from the BASH environment variables:
 ```
 # set the following variables:
+GITHUB_REPO=<your-username/your-repo>
 GOOGLE_CREDENTIALS_FILE=<build service account name>.json
 GCP_PROJECT_ID=<GCP Project ID>
 GCP_REGION=<GCP Region Code>
-GCP_CALENDAR_SERVICE_ACCOUNT=<the name you'd like to use for your function service account>
+GCP_CALENDAR_SERVICE_ACCOUNT_DISPLAY_NAME=<the display name you'd like to use for your function service account>
+GCP_CALENDAR_SERVICE_ACCOUNT_NAME=<the ID you'd like to use for your function service account>
+GCP_CALENDAR_SERVICE_ACCOUNT_EMAIL=SERVICE_ACCOUNT_EMAIL="${GCP_CALENDAR_SERVICE_ACCOUNT_NAME}@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
 GOOGLE_DEFAULT_CALENDAR_ID=<the calendar ID for your default calendar, usually your GMAIL address>
 GOOGLE_APPSHEET_APP_ID=<Appsheet ID>
 GOOGLE_APPSHEET_ACCESS_KEY=<the secret access key from Google Appsheet>
