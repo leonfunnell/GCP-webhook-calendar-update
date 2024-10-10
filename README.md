@@ -7,11 +7,13 @@ It's designed to be fully automated, all you need is an existing GitHub and GCP 
 
 Most of the code was created using GitHub Co-Pilot (based on ChatGPT 4o).  The AI intents used are in the AI Intents folder for your reference.  Be aware that this resulted in a somewhat broken project (as is usually the case when using AI) so I had to re-write a sizeable amount of it manually afterwards.  ChatGPT made a lot of halucinations about how to use various Terraform and GitHub Actions commands.
 
+I do make heavy use of the Co-Pilot auto-complete function in VSCode - it's an absolute game-changer.  If you've not tried it, I highly recommend you do!
+
 ## It will do the following:
 - **Create a service account in GCP*** with the appropriate permissions to deploy all the resources, using a BASH script you run on your local terminal
 - **Run deploy.yml in GitHub Actions**, which pulls repository variables and secrets from GitHub.  These can be defined by running the script or manually entering them in "settings/Secrets and Variables/Actions".  You can either define them at the Repository level or Environment level (such as Dev, QA, Prod)
 - **Run Two terraform templates.**  
-    - **The first (backend.tf)** is generated dynamically in GitHub Actions to connect to our TF_STATE_BUCKET. We need to do this as GitHub action uses ephemeral runners, and any state files stored on the filesystem of the runner are lost.  This way we can keep track of the state of our GCP resources across runs. 
+    - **The first (backend.tf)** is generated dynamically in GitHub Actions to connect to our TF_STATE_BUCKET.  We do this dynamically as it's not possible to use a variable for the bucket name for the gcs provider. GitHub actions uses ephemeral runners, and any state files stored on the filesystem of the runner are lost.  This way we can keep track of the state of our GCP resources across runs. 
     - **The second (main.tf)** creates all the GCP resources:
         - A service account to run our Python code in Cloud Functions with permissions to read secrets and manage Google Calendar entries
         - Storage for secrets to connect to GCP, Google Calendar, Google Appsheet, etc in Google Secrets Manager
@@ -20,24 +22,26 @@ Most of the code was created using GitHub Co-Pilot (based on ChatGPT 4o).  The A
         - The Cloud Function with the Python code
 - 
 
-Setup
+# Setup
 -----
 
-Prerequisists:
+## Prerequisists:
 - You have a valid GCP account and project with admin role
 - You have gcloud CLI installed and authenticated in BASH.  Type:
 ```
 gcloud auth login
 ```
-- You have gh and git installed
+- You have gh > 2.45 installed (required for gh variables)
 - gh is authenticated with your github repo.  Type:
 ```
 gh auth login
 ```
 - You need to provide the following:
+    - GCP_PROJECT_ID (an existing project ID) - If you neglect to provide this, we will use the PROJECT_ID associated with the gcloud CLI 
+    - --or--
+    - GCP_PROJECT_NAME - the name for your new GCP project.  It will create your project and enable the required APIs    
     - GCP_REGION (GCP region code such as us-east1, europe-west2, see https://gist.github.com/rpkim/084046e02fd8c452ba6ddef3a61d5d59)
-    - GCP_PROJECT_ID (an existing project ID)
-    - HEADER_SOURCE_TO_PASS - A key/value pair delimited by colon (:) which will be used to prevent unathenticated calls to your webhook address. 
+    - HEADER_SOURCE_TO_PASS - A key/value pair delimited by colon (:) which will be used to prevent unathenticated calls to your webhook address.  
 
 - Optional variables
     - Build account name (the name of an IAM user that will get created by gcpsetup.sh.  It will be given permission to create the required resources in GCP).  If you neglect to provide this, a name with a random suffix will be generated.
@@ -45,7 +49,7 @@ gh auth login
     - GOOGLE_DEFAULT_CALENDAR_ID - The ID of your central calendar for bookings entries.  We will use the default for your Google account if you don't provide this
     - CALENDAR_SERVICE_ACCOUNT_NAME - The name you wish to use for the service account that will have permissions to run your Cloud Function, and to read, create, update, delete calendar entries.  We will generate this if you don't specify it
     - 
-
+# Instructions
 1. Fork this repository into your own Github account
 2. Run the following (to create a build account in GCP and output a JSON credentials file on your local filesystem):
 ```

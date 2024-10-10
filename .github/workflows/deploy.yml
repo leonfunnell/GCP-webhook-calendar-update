@@ -7,24 +7,20 @@ on:
       - main
 
 env:
-  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-  GCP_REGION: ${{ vars.GCP_REGION }}
-  GOOGLE_DEFAULT_CALENDAR_ID: ${{ vars.GOOGLE_DEFAULT_CALENDAR_ID }}
-  GOOGLE_APPSHEET_APP_ID: ${{ vars.GOOGLE_APPSHEET_APP_ID }}
-  GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL: ${{ vars.GCP_GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL }}
-  HEADER_SOURCE_TO_PASS: ${{ vars.HEADER_SOURCE_TO_PASS }}
-  GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-  GOOGLE_APPSHEET_ACCESS_KEY: ${{ secrets.GOOGLE_APPSHEET_ACCESS_KEY }}
-  TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+  # If we prefix variables with TF_VAR, they are automatically passed to Terraform and TF_VAR is stripped
+  # secrets
+  TF_VAR_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+  TF_VAR_GOOGLE_APPSHEET_ACCESS_KEY: ${{ secrets.GOOGLE_APPSHEET_ACCESS_KEY }}
+
+  # vars
+  TF_VAR_TF_STATE_BUCKET: ${{ vars.GCP_PROJECT_ID }}-tfstate
   TF_VAR_GOOGLE_APPSHEET_APP_ID: ${{ vars.GOOGLE_APPSHEET_APP_ID }}
   TF_VAR_GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   TF_VAR_GCP_REGION: ${{ vars.GCP_REGION }}
   TF_VAR_GOOGLE_DEFAULT_CALENDAR_ID: ${{ vars.GOOGLE_DEFAULT_CALENDAR_ID }}
   TF_VAR_HEADER_SOURCE_TO_PASS: ${{ vars.HEADER_SOURCE_TO_PASS }}
-  TF_VAR_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-  TF_VAR_GOOGLE_APPSHEET_ACCESS_KEY: ${{ secrets.GOOGLE_APPSHEET_ACCESS_KEY }}
-  TF_VAR_TF_STATE_BUCKET: ${{ vars.GCP_PROJECT_ID }}-tfstate
   TF_VAR_CALENDAR_SERVICE_ACCOUNT_NAME: ${{ vars.CALENDAR_SERVICE_ACCOUNT_NAME }}
+  TF_VAR_CALENDAR_SERVICE_ACCOUNT_DISPLAY_NAME: ${{ vars.CALENDAR_SERVICE_ACCOUNT_DISPLAY_NAME }}
   TF_VAR_CALENDAR_SECRET_NAME: ${{ vars.CALENDAR_SECRET_NAME }}
 
 jobs:
@@ -37,13 +33,13 @@ jobs:
     - name : Authenticate with Google Cloud
       uses: 'google-github-actions/auth@v2'
       with:
-        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+        credentials_json: '${{ env.TF_VAR_GOOGLE_CREDENTIALS }}'
 
     - name: Set up Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
       with:
        version: 'latest'
-       project_id: ${{ env.GCP_PROJECT_ID }}
+       project_id: ${{ env.TF_VAR_GCP_PROJECT_ID }}
 
     - name: Install Terraform, Zip
       run: |
@@ -58,8 +54,11 @@ jobs:
     
     - name: Create/use TF State bucket, create TF backend config
       run: |
+        # check if bucket exists, create if not
         gcloud storage buckets list | grep gs://${{ env.TF_VAR_TF_STATE_BUCKET }} || gcloud storage buckets create gs://${{ env.TF_VAR_TF_STATE_BUCKET }} --location=${{ env.GCP_REGION }}
+        # enable versioning on the bucket if not already enabled (required for TF_STATE)
         gcloud storage buckets describe gs://${{ env.TF_VAR_TF_STATE_BUCKET }} | grep "versioning_enabled: true" || gcloud storage buckets update gs://${{ env.TF_VAR_TF_STATE_BUCKET }} --versioning
+        # Create backend.tf file using the TF_VAR_TF_STATE_BUCKET (it's not possible to use env vars in the backend config)
         echo "terraform {" > terraform/backend.tf
         echo "   backend \"gcs\" {" >> terraform/backend.tf
         echo "      bucket = \"${{ env.TF_VAR_TF_STATE_BUCKET }}\"" >> terraform/backend.tf
