@@ -23,8 +23,24 @@ set -e
 source ~/initprojectvars.sh
 # parse command line arguments and set variables. Allow only one of --force or --reuse
 
+# accept key:value pairs as arguments, including: GCP_PROJECT_ID, GCP_PROJECT_NAME, GCP_BILLING_ACCOUNT_ID, BUILD_SERVICE_ACCOUNT_NAME, BUILD_SERVICE_ACCOUNT_DISPLAY_NAME
 while [ "$1" != "" ]; do
     case $1 in
+        --GCP_PROJECT_ID=* )
+            GCP_PROJECT_ID="${1#*=}"
+            ;;
+        --GCP_PROJECT_NAME=* )
+            GCP_PROJECT_NAME="${1#*=}"
+            ;;
+        --GCP_BILLING_ACCOUNT_ID=* )
+            GCP_BILLING_ACCOUNT_ID="${1#*=}"
+            ;;
+        --BUILD_SERVICE_ACCOUNT_NAME=* )
+            BUILD_SERVICE_ACCOUNT_NAME="${1#*=}"
+            ;;
+        --BUILD_SERVICE_ACCOUNT_DISPLAY_NAME=* )
+            BUILD_SERVICE_ACCOUNT_DISPLAY_NAME="${1#*=}"
+            ;;
         --force )               if [ "$REUSE" == "true" ]; then
                                     echo "Cannot use both --force and --reuse options together."
                                     exit 1
@@ -41,11 +57,22 @@ while [ "$1" != "" ]; do
                                 ACCOUNT_MODE="reuse"
                                 echo "Using --reuse option. Existing service account will be reused."
                                 ;;
-        * )                     echo "Invalid argument: $1"
-                                exit 1
+        * )
+            echo "Invalid argument: $1"
+            exit 1
     esac
     shift
 done
+# output all known variables
+echo "GCP_PROJECT_ID: $GCP_PROJECT_ID"
+echo "GCP_PROJECT_NAME: $GCP_PROJECT_NAME"
+echo "GCP_BILLING_ACCOUNT_ID: $GCP_BILLING_ACCOUNT_ID"
+echo "BUILD_SERVICE_ACCOUNT_NAME: $BUILD_SERVICE_ACCOUNT_NAME"
+echo "BUILD_SERVICE_ACCOUNT_DISPLAY_NAME: $BUILD_SERVICE_ACCOUNT_DISPLAY_NAME"
+echo "FORCE: $FORCE"
+echo "REUSE: $REUSE"
+echo "ACCOUNT_MODE: $ACCOUNT_MODE"
+
 
 # check if GCP_PROJECT_ID is set
 if [ -z "$GCP_PROJECT_ID" ]
@@ -58,7 +85,8 @@ then
     else
         PROJECT_NAME="$GCP_PROJECT_NAME"
         # check if the project already exists
-        if gcloud beta projects list --filter="name ='$PROJECT_NAME'" &> /dev/null
+        PROJECT_EXISTS=$(gcloud beta projects list --filter="name ='$PROJECT_NAME'" --format="value(projectId)")
+        if [ -n "$PROJECT_EXISTS" ]
         then
             PROJECT_ID=$(gcloud beta projects list --filter="name ='$PROJECT_NAME'" --format="value(projectId)")
             echo "Project $PROJECT_NAME already exists with ID $PROJECT_ID"
@@ -113,7 +141,7 @@ gcloud services enable \
     secretmanager.googleapis.com \
     apigateway.googleapis.com \
     storage-component.googleapis.com  \
-    compute.googleapis.com 
+    compute.googleapis.com --billing-account $BILLING_ACCOUNT_ID
 
 # check if BUILD_SERVICE_ACCOUNT_NAME is set
 if [ -z "$BUILD_SERVICE_ACCOUNT_NAME" ]
