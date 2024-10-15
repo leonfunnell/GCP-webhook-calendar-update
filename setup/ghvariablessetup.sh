@@ -1,6 +1,7 @@
 #!/bin/bash
 # This script will set the GitHub Actions environment secrets and variables required for the CI/CD pipeline.
-source gcpsetup.sh
+source ../config/initprojectvars.sh
+source ../config/config.sh
 # Pre-requisites:
 # check that gh is installed and in the PATH
 if ! command -v gh &> /dev/null; then
@@ -35,6 +36,8 @@ if [ -z "$GITHUB_REPO" ]; then
     fi
 fi
 REPO=$GITHUB_REPO
+
+KEY_FILE_PATH=$GOOGLE_CREDENTIALS_FILE
 
 echo KEY_FILE_PATH=$KEY_FILE_PATH
 echo BUILD_SERVICE_ACCOUNT_NAME=$BUILD_SERVICE_ACCOUNT_NAME

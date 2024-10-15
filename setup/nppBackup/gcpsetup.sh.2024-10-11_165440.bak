@@ -20,11 +20,8 @@
 
 # create error handler
 set -e
-source ../config/initprojectvars.sh # You can make this from the ../config/initprojectvars.sh.example file
-TEMPCONFIGFILE=../config/config.sh # create a temporary file to store the configuration
-install -Dv /dev/null $TEMPCONFIGFILE # create file and folder if they don't exist
-
-# parse command line arguments and set variables. Allow only one of --force or --reuse.  Alternative to using the initprojectvars.sh file
+source ~/initprojectvars.sh
+# parse command line arguments and set variables. Allow only one of --force or --reuse
 # accept key:value pairs as arguments, including: GCP_PROJECT_ID, GCP_PROJECT_NAME, GCP_BILLING_ACCOUNT_ID, BUILD_SERVICE_ACCOUNT_NAME, BUILD_SERVICE_ACCOUNT_DISPLAY_NAME
 while [ "$1" != "" ]; do
     case $1 in
@@ -96,9 +93,12 @@ then
         else
             # create the project in GCP
             # create a string from our project name to use for the project ID, with all lowercase, hyphens for spaces, and a random number suffix
-            echo "$PROJECT_NAME $RANDOM"| tr '[:blank:]' '-' | tr '[:upper:]' '[:lower:]' > ~/project_id.txt
+            PROJECT_ID=$(echo "$PROJECT_NAME $RANDOM"| tr '[:upper:]' '[:lower:]' | tr '[:blank:]' '-')
+            echo ${PROJECT_ID}>~/project_id.txt
             PROJECT_ID=$(cat ~/project_id.txt)
             echo "Creating a new project in GCP with PROJECT_NAME: ${PROJECT_NAME}, PROJECT_ID: ${PROJECT_ID}"
+            echo sss
+            exit 0
             gcloud projects create $PROJECT_ID --name="$PROJECT_NAME"
             # set the project ID
             export GCP_PROJECT_ID=$PROJECT_ID
@@ -144,7 +144,7 @@ gcloud services enable \
     secretmanager.googleapis.com \
     apigateway.googleapis.com \
     storage-component.googleapis.com  \
-    compute.googleapis.com --project=$PROJECT_ID
+    compute.googleapis.com --billing-account $BILLING_ACCOUNT_ID
 
 # check if BUILD_SERVICE_ACCOUNT_NAME is set
 if [ -z "$BUILD_SERVICE_ACCOUNT_NAME" ]
@@ -216,7 +216,6 @@ fi
             --role "roles/cloudfunctions.admin" \
             --role "roles/resourcemanager.projectIamAdmin" \
             --quiet
-
 # Export a key for the service account in JSON format
 gcloud iam service-accounts keys create $KEY_FILE_PATH \
     --iam-account $SERVICE_ACCOUNT_EMAIL \
@@ -228,17 +227,13 @@ then
     echo "Service account updated: $SERVICE_ACCOUNT_EMAIL"
 else
     echo "Service account created: $SERVICE_ACCOUNT_EMAIL"
-fi
+fi.
 echo "Key file created: $KEY_FILE_PATH"
-
-
-echo GOOGLE_CREDENTIALS_FILE=$KEY_FILE_PATH  >$TEMPCONFIGFILE
-echo BUILD_SERVICE_ACCOUNT_EMAIL=$SERVICE_ACCOUNT_EMAIL >>$TEMPCONFIGFILE
-echo BUILD_SERVICE_ACCOUNT_DISPLAY_NAME=\"$SERVICE_ACCOUNT_DISPLAY_NAME\"" >>$TEMPCONFIGFILE
-echo BUILD_SERVICE_ACCOUNT_NAME=$SERVICE_ACCOUNT_NAME >>$TEMPCONFIGFILE
-cat $TEMPCONFIGFILE
-
-#  create a logging function that will output to the console and to a log file, showing the line number and the timestamp
-log() {
-    echo "$(date -u) [${1}:${2}] ${3}" | tee -a ~/gcpsetup.log
-}
+export GOOGLE_CREDENTIALS_FILE=$KEY_FILE_PATH
+export BUILD_SERVICE_ACCOUNT_EMAIL=$SERVICE_ACCOUNT_EMAIL
+export BUILD_SERVICE_ACCOUNT_DISPLAY_NAME=$SERVICE_ACCOUNT_DISPLAY_NAME
+export BUILD_SERVICE_ACCOUNT_NAME=$SERVICE_ACCOUNT_NAME
+echo "BUILD_SERVICE_ACCOUNT_DISPLAY_NAME: $BUILD_SERVICE_ACCOUNT_DISPLAY_NAME"
+echo "BUILD_SERVICE_ACCOUNT_NAME: $BUILD_SERVICE_ACCOUNT_NAME"
+echo "BUILD_SERVICE_ACCOUNT_EMAIL: $BUILD_SERVICE_ACCOUNT_EMAIL"
+echo "GOOGLE_CREDENTIALS_FILE: $GOOGLE_CREDENTIALS_FILE"
