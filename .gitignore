@@ -1,3 +1,4 @@
 # ignore all files in the config directory as these may contain sensitive and temporary information
 config/*
-!config/initprojectvars.sh
+# allow example file
+!config/initprojectvars.sh.example
