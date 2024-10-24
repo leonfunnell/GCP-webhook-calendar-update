@@ -1,0 +1,8 @@
+export GCP_PROJECT_NAME="My Calendar Project"
+export GOOGLE_APPSHEET_APP_ID="1111111-2222-34ab-112e-abc1234012332"
+export GOOGLE_APPSHEET_ACCESS_KEY="V2-1234-abc4-Qavv-1111-aaaa-1111-vvvv-ssss"
+export HEADER_SOURCE_TO_PASS="x-webhook-source:my-app-name"
+export GCP_REGION=europe-west2
+export GOOGLE_DEFAULT_CALENDAR_ID="mycalendername@mywebsite.com"
+export CALENDAR_SERVICE_ACCOUNT_NAME="calendar_function_sa"
+export CALENDAR_SERVICE_ACCOUNT_DISPLAY_NAME="Calendar Function Service Account"
